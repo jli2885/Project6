@@ -1,7 +1,6 @@
 module Data_Memory (
     // Input signals
     input wire MemRead,
-    input wire MemWrite,
     
     // Address and WriteData inputs
     input wire [2:0] funct3,
@@ -10,13 +9,15 @@ module Data_Memory (
 
     // Output write back data
     output wire misaligned,
+    output wire access_valid,
     output wire [31:0] ReadData,
+
+    // Mem control signals
+    input wire response,
 
     // Data from dmem
     input wire [31:0] i_dmem_rdata,
     // Signals & Data to dmem
-    output wire        o_dmem_ren,
-    output wire        o_dmem_wen,
     output wire [31:0] o_dmem_addr,
     output wire [31:0] o_dmem_wdata,
     output wire [3:0] o_dmem_mask
@@ -48,11 +49,6 @@ module Data_Memory (
     // Misalignment Detection
     assign misaligned = (half_access && ALU_result[0]) || (word_access && (byte_offset != 2'b00));
 
-    // Read / Write Enable
-    assign o_dmem_ren = MemRead && !MemWrite && access_valid && !misaligned;
-
-    assign o_dmem_wen = MemWrite && !MemRead && access_valid && !misaligned;
-
     // Byte Mask Generation
     assign byte_mask =
         byte_access ?
@@ -76,7 +72,6 @@ module Data_Memory (
                           (byte_offset == 2'b10) ? {WriteData[15:0], 16'b0} :
                           {WriteData[7:0], 24'b0};
 
-
     // Load Data 
     assign shifted_data = (byte_offset == 2'b00) ? i_dmem_rdata :
                           (byte_offset == 2'b01) ? {8'b0,  i_dmem_rdata[31:8]} :
@@ -84,7 +79,7 @@ module Data_Memory (
                           {24'b0, i_dmem_rdata[31:24]};
 
     //  According to funct3, sign extend or zero extend the data
-    assign ReadData = !o_dmem_ren ? 32'b0 :
+    assign ReadData = !(response && MemRead) ? 32'b0 :
                       (funct3 == 3'b000) ?{{24{shifted_data[7]}}, shifted_data[7:0]} :
                       (funct3 == 3'b001) ?{{16{shifted_data[15]}}, shifted_data[15:0]} :
                       (funct3 == 3'b010) ? shifted_data :

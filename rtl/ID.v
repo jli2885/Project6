@@ -1,4 +1,3 @@
-
 module ID(
     input i_clk,
     input i_rst,

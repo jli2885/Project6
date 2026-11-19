@@ -27,6 +27,7 @@ module ID_EX_reg(
   input wire id_memwrite,
   input wire id_branch,
   input wire flush_IDEX,
+  input wire mem_stall,
 
   // Outputs Data
   output reg idex_valid,
@@ -79,7 +80,7 @@ module ID_EX_reg(
       ex_memread <= 0;
       ex_memwrite <= 0;
       ex_branch <= 0;
-    end else begin
+    end else if(!mem_stall) begin
       idex_valid <= ifid_valid;
       ex_pc <= id_pc;
       ex_pc4 <= id_pc4;
