@@ -573,8 +573,6 @@ module hart #(
         .i_dmem_rdata(i_dmem_rdata),
         .o_dmem_wdata(o_dmem_wdata),
         .o_dmem_mask(o_dmem_mask),
-        .o_dmem_ren(o_dmem_ren),
-        .o_dmem_wen(o_dmem_wen),
         .mem_stall(mem_stall),
         .mem_memread(mem_memread),
         .mem_memwrite(mem_memwrite),

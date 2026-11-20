@@ -71,7 +71,7 @@ module MEM_WB_reg(
       wb_memtoreg <= 0;
       wb_trap <= 0;
     end else begin
-      memwb_valid <= exmem_valid && !mem_stall;;
+      memwb_valid <= exmem_valid && !mem_stall;
       wb_pc <= mem_pc;
       wb_next_pc <= mem_next_pc;
       wb_inst <= mem_inst;
