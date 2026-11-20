@@ -320,8 +320,7 @@ module hart #(
     );
 
 
-    // EX/EX forwarding
-    
+    // Forwarding logic 
     assign forward_rs1 = (ForwardA == 2'b10) ? mem_ALU_result : (ForwardA == 2'b01) ? wb_data :
                          (ForwardA == 2'b11) ? saved_rs1_data : ex_rs1_rdata;
 
@@ -352,7 +351,6 @@ module hart #(
     );
 
     // IF/ID register
-    
     IF_ID_reg u_if_id_reg(
         .i_clk(i_clk),
         .i_rst(i_rst),
@@ -618,6 +616,7 @@ module hart #(
     assign o_retire_dmem_wdata=wb_dmem_wdata;
     assign o_retire_pc=wb_pc;
     assign o_retire_next_pc=wb_next_pc;
+    
 endmodule
 
 `default_nettype wire
