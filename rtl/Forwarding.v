@@ -44,8 +44,8 @@ module Forwarding_Unit(
     reg saved_rs1_valid;
     reg saved_rs2_valid;
 
-    reg saved_forward_rs1;
-    reg saved_forward_rs2;
+    wire saved_forward_rs1;
+    wire saved_forward_rs2;
 
     reg [31:0] saved_rs1_data_reg;
     reg [31:0] saved_rs2_data_reg;

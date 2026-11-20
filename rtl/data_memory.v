@@ -31,7 +31,6 @@ module Data_Memory (
     wire byte_access;
     wire half_access;
     wire word_access;
-    wire access_valid;
 
     // Address Alignment
     assign byte_offset = ALU_result[1:0];
@@ -64,7 +63,7 @@ module Data_Memory (
 
         word_access ? 4'b1111 : 4'b0000;
 
-    assign o_dmem_mask = (o_dmem_ren || o_dmem_wen) ? byte_mask : 4'b0000;
+    assign o_dmem_mask =  byte_mask;
 
     // Store Data Alignment
     assign o_dmem_wdata = (byte_offset == 2'b00) ? WriteData :

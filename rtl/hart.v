@@ -159,10 +159,19 @@ module hart #(
     // target for *taken* branches and jumps.
     output wire [31:0] o_retire_next_pc
 );
+    // flush/stall signals
+    wire stall_IF;
+    wire stall_IFID;
+    wire stall_IDEX;
+    wire stall_EXMEM;
+    wire flush_IFID;
+    wire flush_IDEX;
+
     // Wires of IF Stage
     wire [31:0] if_pc;
     wire [31:0] if_pc4;
     wire [31:0] if_inst;
+    wire if_inst_valid;
 
     // Wires of IF/ID Register and ID Stage
     wire [31:0] id_pc;
@@ -215,14 +224,14 @@ module hart #(
     wire ex_zero;
     wire branch_redirect;
     wire [31:0] target_pc;
-    wire stall_IF;
-    wire stall_IFID;
-    wire flush_IFID;
-    wire flush_IDEX;
+    
     wire [1:0] ForwardA;
     wire [1:0] ForwardB;
     wire [31:0] forward_rs1;
     wire [31:0] forward_rs2;
+    wire redirect_fire;
+    wire [31:0] saved_rs1_data;
+    wire [31:0] saved_rs2_data;
 
     // Wires of EX/MEM Register and MEM Stage
     wire exmem_valid;
@@ -267,68 +276,111 @@ module hart #(
     wire wb_memtoreg;
     wire wb_trap;
     wire [31:0] wb_data;
+    wire mem_stall;
 
     // Hazard Detection Unit
+    
     HDU u_hdu(
         .IF_ID_inst(id_inst),
         .IF_ID_valid(ifid_valid),
         .ID_EX_valid(idex_valid),
         .ID_EX_MemRead(ex_memread),
         .ID_EX_rd(ex_rd_waddr),
+
         .redirect_ex(branch_redirect),
+        .dmem_wait(mem_stall),
+
         .stall_IF(stall_IF),
         .stall_IFID(stall_IFID),
+        .stall_IDEX(stall_IDEX),
+        .stall_EXMEM(stall_EXMEM),
+
         .flush_IFID(flush_IFID),
         .flush_IDEX(flush_IDEX)
     );
 
+
     // Forwarding Unit
     Forwarding_Unit u_forwarding(
+        .i_clk(i_clk),
+        .i_rst(i_rst),
+
+        .stall_EX(stall_IDEX),
+
         .ex_rs1_raddr(ex_rs1_raddr),
         .ex_rs2_raddr(ex_rs2_raddr),
+
+        .ex_valid(idex_valid),
         .mem_valid(exmem_valid),
+        .wb_valid(memwb_valid),
+
         .mem_regwrite(mem_regwrite),
         .mem_memread(mem_memread),
-        .mem_rd_waddr(mem_rd_waddr),
-        .wb_valid(memwb_valid),
         .wb_regwrite(wb_regwrite),
+
+        .mem_rd_waddr(mem_rd_waddr),
         .wb_rd_waddr(wb_rd_waddr),
+        .wb_data(wb_data),
+
         .ForwardA(ForwardA),
-        .ForwardB(ForwardB)
+        .ForwardB(ForwardB),
+
+        .saved_rs1_data(saved_rs1_data),
+        .saved_rs2_data(saved_rs2_data)
     );
 
+
     // EX/EX forwarding
-    assign forward_rs1 = (ForwardA==2'b10) ? mem_ALU_result : (ForwardA==2'b01) ? wb_data : ex_rs1_rdata;
-    assign forward_rs2 = (ForwardB==2'b10) ? mem_ALU_result : (ForwardB==2'b01) ? wb_data : ex_rs2_rdata;
+    
+    assign forward_rs1 = (ForwardA == 2'b10) ? mem_ALU_result : (ForwardA == 2'b01) ? wb_data :
+                         (ForwardA == 2'b11) ? saved_rs1_data : ex_rs1_rdata;
+
+    assign forward_rs2 = (ForwardB == 2'b10) ? mem_ALU_result : (ForwardB == 2'b01) ? wb_data :
+                         (ForwardB == 2'b11) ? saved_rs2_data : ex_rs2_rdata;
 
     // IF Stage
     IF #(.RESET_ADDR(RESET_ADDR)) u_if(
         .i_clk(i_clk),
         .i_rst(i_rst),
-        .PCsrc(branch_redirect),
+
+        .PCsrc(redirect_fire),
         .if_stall(stall_IF),
+
+        .i_imem_ready(i_imem_ready),
+        .i_imem_valid(i_imem_valid),
         .i_imem_rdata(i_imem_rdata),
+
         .target_pc(target_pc),
+
         .o_imem_raddr(o_imem_raddr),
+        .o_imem_ren(o_imem_ren),
+
         .PC_4(if_pc4),
         .PC(if_pc),
-        .inst(if_inst)
+        .inst(if_inst),
+        .inst_valid(if_inst_valid)
     );
 
     // IF/ID register
+    
     IF_ID_reg u_if_id_reg(
         .i_clk(i_clk),
         .i_rst(i_rst),
+
         .if_pc(if_pc),
         .if_pc4(if_pc4),
         .if_inst(if_inst),
+        .if_inst_valid(if_inst_valid),
+
         .stall_IFID(stall_IFID),
         .flush_IFID(flush_IFID),
+
         .ifid_valid(ifid_valid),
         .id_pc(id_pc),
         .id_pc4(id_pc4),
         .id_inst(id_inst)
     );
+
 
     // ID Stage
     ID u_id(
@@ -337,7 +389,7 @@ module hart #(
         .inst(id_inst),
         .wb_data(wb_data),
         .wb_rd_waddr(wb_rd_waddr),
-        .wb_regwrite(wb_regwrite && memwb_valid),
+        .wb_regwrite(wb_regwrite && memwb_valid && !wb_trap),
         .funct3(id_funct3),
         .funct7(id_funct7),
         .rs1_raddr(id_rs1_raddr),
@@ -383,6 +435,7 @@ module hart #(
         .id_memwrite(id_memwrite),
         .id_branch(id_branch),
         .flush_IDEX(flush_IDEX),
+        .mem_stall(stall_EXMEM),
         .idex_valid(idex_valid),
         .ex_pc(ex_pc),
         .ex_pc4(ex_pc4),
@@ -425,6 +478,7 @@ module hart #(
     );
 
     // Branch and jump mux in EX Stage.
+    assign redirect_fire = branch_redirect && !mem_stall;
     assign branch_redirect = idex_valid && ((ex_branch && ex_zero) || (ex_jump!=2'b00));
     assign target_pc = (ex_jump!=2'b00)?ex_jump_target:ex_branch_target;
     
@@ -451,6 +505,7 @@ module hart #(
         .ex_memread(ex_memread),
         .ex_memwrite(ex_memwrite),
         .exmem_valid(exmem_valid),
+        .mem_stall(stall_EXMEM),
         .mem_pc(mem_pc),
         .mem_pc4(mem_pc4),
         .mem_inst(mem_inst),
@@ -467,17 +522,27 @@ module hart #(
         .mem_memread(mem_memread),
         .mem_memwrite(mem_memwrite)
     );
-
+    
     // MEM Stage
     MEM u_mem(
+        .i_clk(i_clk),
+        .i_rst(i_rst),
+
         .MemRead(mem_memread && exmem_valid),
         .MemWrite(mem_memwrite && exmem_valid),
+
         .ALU_result(mem_ALU_result),
         .WriteData(mem_rs2_rdata),
         .funct3(mem_funct3),
+
         .misaligned(mem_misaligned),
         .ReadData(mem_ReadData),
+        .mem_stall(mem_stall),
+
         .i_dmem_rdata(i_dmem_rdata),
+        .i_dmem_ready(i_dmem_ready),
+        .i_dmem_valid(i_dmem_valid),
+
         .o_dmem_ren(o_dmem_ren),
         .o_dmem_wen(o_dmem_wen),
         .o_dmem_addr(o_dmem_addr),
@@ -485,8 +550,9 @@ module hart #(
         .o_dmem_mask(o_dmem_mask)
     );
 
+
     // MEM trap signal
-    assign mem_trap = (mem_memread && mem_memwrite) && mem_misaligned;
+    assign mem_trap = exmem_valid && (mem_memread || mem_memwrite) && mem_misaligned;
 
     // MEM/WB Register
     MEM_WB_reg u_mem_wb_reg(
@@ -509,6 +575,9 @@ module hart #(
         .o_dmem_mask(o_dmem_mask),
         .o_dmem_ren(o_dmem_ren),
         .o_dmem_wen(o_dmem_wen),
+        .mem_stall(mem_stall),
+        .mem_memread(mem_memread),
+        .mem_memwrite(mem_memwrite),
         .mem_regwrite(mem_regwrite),
         .mem_memtoreg(mem_memtoreg),
         .mem_trap(mem_trap),
