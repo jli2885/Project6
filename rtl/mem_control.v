@@ -18,11 +18,11 @@ module mem_control (
 
     reg request_pending;
 
-    wire mem_access;
+    //wire mem_access;
     wire legal_access;
     wire request_fire;
 
-    assign mem_access = mem_read || mem_write;
+    //assign mem_access = mem_read || mem_write;
 
     assign legal_access = (mem_read ^ mem_write) && access_valid && !misaligned;
 
@@ -33,10 +33,10 @@ module mem_control (
     assign request_write = request_fire && mem_write;
 
     // Both Load and Store receive a completion response
-    assign response_fire = !i_rst && request_pending && i_dmem_valid;
+    assign response_fire = !i_rst && request_pending && i_dmem_valid && mem_read;
 
     // Release stall in the response cycle
-    assign mem_stall = legal_access && !response_fire;
+    assign mem_stall = legal_access && ((mem_read && !response_fire) || (mem_write && !request_write));
 
     always @(posedge i_clk) begin
         if (i_rst) begin
@@ -45,7 +45,7 @@ module mem_control (
         else if (response_fire) begin
             request_pending <= 1'b0;
         end
-        else if (request_fire) begin
+        else if (request_read) begin
             request_pending <= 1'b1;
         end
     end
