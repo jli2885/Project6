@@ -21,6 +21,7 @@ module Forwarding_Unit(
     // load register address
     input [4:0] mem_rd_waddr,
     input [4:0] wb_rd_waddr,
+    input [31:0] wb_data,
     
     // Forwarding control signals
     output [1:0] ForwardA,
@@ -42,6 +43,9 @@ module Forwarding_Unit(
 
     reg saved_rs1_valid;
     reg saved_rs2_valid;
+
+    reg saved_forward_rs1;
+    reg saved_forward_rs2;
 
     reg [31:0] saved_rs1_data_reg;
     reg [31:0] saved_rs2_data_reg;
