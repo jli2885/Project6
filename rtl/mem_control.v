@@ -17,18 +17,14 @@ module mem_control (
 );
 
     reg request_pending;
-
-    //wire mem_access;
     wire legal_access;
     wire request_fire;
 
-    //assign mem_access = mem_read || mem_write;
-
+    // Memory access legality signal
     assign legal_access = (mem_read ^ mem_write) && access_valid && !misaligned;
 
     // Send a request only once
     assign request_fire = !i_rst && !request_pending && legal_access && i_dmem_ready;
-
     assign request_read = request_fire && mem_read;
     assign request_write = request_fire && mem_write;
 

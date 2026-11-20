@@ -286,15 +286,12 @@ module hart #(
         .ID_EX_valid(idex_valid),
         .ID_EX_MemRead(ex_memread),
         .ID_EX_rd(ex_rd_waddr),
-
         .redirect_ex(branch_redirect),
         .dmem_wait(mem_stall),
-
         .stall_IF(stall_IF),
         .stall_IFID(stall_IFID),
         .stall_IDEX(stall_IDEX),
         .stall_EXMEM(stall_EXMEM),
-
         .flush_IFID(flush_IFID),
         .flush_IDEX(flush_IDEX)
     );
@@ -304,27 +301,20 @@ module hart #(
     Forwarding_Unit u_forwarding(
         .i_clk(i_clk),
         .i_rst(i_rst),
-
         .stall_EX(stall_IDEX),
-
         .ex_rs1_raddr(ex_rs1_raddr),
         .ex_rs2_raddr(ex_rs2_raddr),
-
         .ex_valid(idex_valid),
         .mem_valid(exmem_valid),
         .wb_valid(memwb_valid),
-
         .mem_regwrite(mem_regwrite),
         .mem_memread(mem_memread),
         .wb_regwrite(wb_regwrite),
-
         .mem_rd_waddr(mem_rd_waddr),
         .wb_rd_waddr(wb_rd_waddr),
         .wb_data(wb_data),
-
         .ForwardA(ForwardA),
         .ForwardB(ForwardB),
-
         .saved_rs1_data(saved_rs1_data),
         .saved_rs2_data(saved_rs2_data)
     );
@@ -573,8 +563,6 @@ module hart #(
         .i_dmem_rdata(i_dmem_rdata),
         .o_dmem_wdata(o_dmem_wdata),
         .o_dmem_mask(o_dmem_mask),
-        //.o_dmem_ren(o_dmem_ren),
-        //.o_dmem_wen(o_dmem_wen),
         .mem_stall(mem_stall),
         .mem_memread(mem_memread),
         .mem_memwrite(mem_memwrite),
@@ -610,7 +598,6 @@ module hart #(
         .MemtoReg(wb_memtoreg),
         .WB_data(wb_data)
     );
-    
     
     // The retire signals
     assign o_retire_valid=memwb_valid;

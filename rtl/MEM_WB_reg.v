@@ -16,8 +16,6 @@ module MEM_WB_reg(
   input wire [31:0] i_dmem_rdata,
   input wire [31:0] o_dmem_wdata,
   input wire [ 3:0] o_dmem_mask,
-  // input wire o_dmem_ren,
-  // input wire o_dmem_wen,
   input wire mem_regwrite,
   input wire mem_memtoreg,
   input wire mem_trap,

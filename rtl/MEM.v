@@ -43,18 +43,14 @@ module MEM (
     
     Data_Memory data_mem (
         .MemRead(MemRead),
-
         .funct3(funct3),
         .ALU_result(ALU_result),
         .WriteData(WriteData),
-
         .misaligned(misaligned),
         .access_valid(access_valid),
         .ReadData(ReadData),
         .response(response_fire),
-
         .i_dmem_rdata(i_dmem_rdata),
-
         .o_dmem_addr(o_dmem_addr),
         .o_dmem_wdata(o_dmem_wdata),
         .o_dmem_mask(o_dmem_mask)
