@@ -22,7 +22,7 @@ module MEM (
     output wire [31:0] o_dmem_wdata,
     output wire [3:0] o_dmem_mask
 );
-    wire reponse;
+    wire response_fire;
     wire access_valid;
 
     mem_control mem_ctrl (
@@ -30,20 +30,20 @@ module MEM (
         .i_rst(i_rst),
         .i_dmem_ready(i_dmem_ready),
         .i_dmem_valid(i_dmem_valid),
-        .exmem_valid(MemRead || MemWrite),
         .mem_read(MemRead),
         .mem_write(MemWrite),
         .access_valid(access_valid),
         .misaligned(misaligned),
         .request_read(o_dmem_ren),
         .request_write(o_dmem_wen),
-        .response(response),
-        .mem_done(mem_done),
+        .response_fire(response_fire),
         .mem_stall(mem_stall)
     );
 
+    
     Data_Memory data_mem (
         .MemRead(MemRead),
+
         .funct3(funct3),
         .ALU_result(ALU_result),
         .WriteData(WriteData),
@@ -51,14 +51,14 @@ module MEM (
         .misaligned(misaligned),
         .access_valid(access_valid),
         .ReadData(ReadData),
-        .response(response),
+        .response(response_fire),
 
-        .i_dmem_addr(i_dmem_addr),
-        .i_dmem_wdata(i_dmem_wdata),
-        .i_dmem_mask(i_dmem_mask),
-        .o_dmem_rdata(o_dmem_rdata)
+        .i_dmem_rdata(i_dmem_rdata),
+
+        .o_dmem_addr(o_dmem_addr),
+        .o_dmem_wdata(o_dmem_wdata),
+        .o_dmem_mask(o_dmem_mask)
     );
-
 
     
 endmodule
