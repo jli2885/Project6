@@ -46,7 +46,7 @@ module IF #(
     assign response_fire = request_pending && i_imem_valid;
 
     // Instruction Output
-    assign inst = buffer_valid ? inst_buffer : 32'h00000013;
+    assign inst = inst_buffer;
 
     assign inst_valid = buffer_valid && !PCsrc;
 

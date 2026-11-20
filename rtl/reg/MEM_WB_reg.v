@@ -21,6 +21,7 @@ module MEM_WB_reg(
   input wire mem_regwrite,
   input wire mem_memtoreg,
   input wire mem_trap,
+  input wire mem_stall,
   output reg memwb_valid,
   output reg [31:0] wb_pc,
   output reg [31:0] wb_next_pc,
@@ -68,7 +69,7 @@ module MEM_WB_reg(
       wb_memtoreg <= 0;
       wb_trap <= 0;
     end else begin
-      memwb_valid <= exmem_valid;
+      memwb_valid <= exmem_valid && !mem_stall;;
       wb_pc <= mem_pc;
       wb_next_pc <= mem_next_pc;
       wb_inst <= mem_inst;

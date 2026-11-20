@@ -5,6 +5,7 @@ module IF_ID_reg(
   input wire [31:0] if_pc,
   input wire [31:0] if_pc4,
   input wire [31:0] if_inst,
+  input wire if_inst_valid,
 
   // Control signals for IF/ID stage
   input wire stall_IFID,
@@ -24,11 +25,19 @@ module IF_ID_reg(
       id_pc <= 0;
       id_pc4 <= 0;
       id_inst <= NOP;
-    end else if(!stall_IFID) begin
-      ifid_valid <= 1'b1;
-      id_pc <= if_pc;
-      id_pc4 <= if_pc4;
-      id_inst <= if_inst;
+    end 
+    else if(!stall_IFID) begin
+      ifid_valid <= if_inst_valid;
+      if(if_inst_valid) begin
+          id_pc <= if_pc;
+          id_pc4 <= if_pc4;
+          id_inst <= if_inst;
+      end
+      else begin
+          id_pc <= 0;
+          id_pc4 <= 0;
+          id_inst <= NOP;
+      end
     end
   end
 
