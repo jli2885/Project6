@@ -16,11 +16,12 @@ module MEM_WB_reg(
   input wire [31:0] i_dmem_rdata,
   input wire [31:0] o_dmem_wdata,
   input wire [ 3:0] o_dmem_mask,
-  input wire o_dmem_ren,
-  input wire o_dmem_wen,
   input wire mem_regwrite,
   input wire mem_memtoreg,
   input wire mem_trap,
+  input wire mem_stall,
+  input wire mem_memread,
+  input wire mem_memwrite,
   output reg memwb_valid,
   output reg [31:0] wb_pc,
   output reg [31:0] wb_next_pc,
@@ -68,7 +69,7 @@ module MEM_WB_reg(
       wb_memtoreg <= 0;
       wb_trap <= 0;
     end else begin
-      memwb_valid <= exmem_valid;
+      memwb_valid <= exmem_valid && !mem_stall;
       wb_pc <= mem_pc;
       wb_next_pc <= mem_next_pc;
       wb_inst <= mem_inst;
@@ -80,14 +81,14 @@ module MEM_WB_reg(
       wb_rs1_raddr <= mem_rs1_raddr;
       wb_rs2_raddr <= mem_rs2_raddr;
       wb_dmem_addr <= o_dmem_addr;
-      wb_dmem_rdata <= i_dmem_rdata;
+      wb_dmem_rdata <= (mem_memread && !mem_stall && !mem_trap) ? i_dmem_rdata : 32'b0;
       wb_dmem_wdata <= o_dmem_wdata;
       wb_dmem_mask <= o_dmem_mask;
-      wb_dmem_ren <= o_dmem_ren;
-      wb_dmem_wen <= o_dmem_wen;
+      wb_dmem_ren <= mem_memread && exmem_valid && !mem_stall && !mem_trap;
+      wb_dmem_wen <= mem_memwrite && exmem_valid && !mem_stall && !mem_trap;
       wb_regwrite <= mem_regwrite;
       wb_memtoreg <= mem_memtoreg;
-      wb_trap <= exmem_valid && mem_trap;
+      wb_trap <= exmem_valid && !mem_stall && mem_trap;
     end
   end
 

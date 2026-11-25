@@ -24,6 +24,7 @@ module EX_MEM_reg(
   input wire ex_memtoreg,
   input wire ex_memread,
   input wire ex_memwrite,
+  input wire mem_stall,
 
   output reg exmem_valid,
   // Output data to MEM stage
@@ -66,7 +67,7 @@ module EX_MEM_reg(
       mem_memtoreg <= 0;
       mem_memread <= 0;
       mem_memwrite <= 0;
-    end else begin
+    end else if(!mem_stall) begin
       exmem_valid <= idex_valid;
       mem_pc <= ex_pc;
       mem_pc4 <= ex_pc4;
